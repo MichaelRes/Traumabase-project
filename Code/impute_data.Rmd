@@ -1,0 +1,31 @@
+---
+title: "Data_Imputer"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r import}
+library(missForest)
+```
+
+```{r impute FAMD}
+processed_data <- read.csv("data_preprocessed.csv",header = TRUE,row.names = 1)
+head(processed_data)
+
+cats <- c("Trauma.center","Anticoagulant.therapy","Antiplatelet.therapy","Pupil.anomaly.ph","Osmotherapy.Anomaly","Cardiac.arrest.ph","Vasopressor.therapy","Pupil.anomaly","Neurosurgery.day0","Tranexamic.acid","TBI","Osmotherapy","IICP","EVD","Decompressive.craniectomy","Death")
+
+for(cat in cats) {
+  processed_data[,cat] <-  as.factor(processed_data[,cat])
+}
+
+processed_data$"Temperature.min" <- NULL
+
+head(processed_data)
+
+imputed_data_FAMD <- missForest(processed_data, verbose = TRUE)
+write.csv(imputed_data_FAMD[1], "data_imputed.csv")
+```

@@ -1,0 +1,69 @@
+---
+title: "clustering"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(FactoMineR)
+library(stats)
+library(factoextra)
+library(NbClust)
+library(grf)
+```
+
+
+```{r}
+processed_data <- read.csv("new.csv",header = TRUE,row.names = 1)
+head(processed_data)
+
+# cats <- c("Trauma.center","Anticoagulant.therapy","Antiplatelet.therapy","Pupil.anomaly.ph","Osmotherapy.Anomaly","Cardiac.arrest.ph","Vasopressor.therapy","Pupil.anomaly","Neurosurgery.day0","TBI","Osmotherapy","IICP","EVD","Decompressive.craniectomy")
+# 
+# for(cat in cats) {
+#   processed_data[,cat] <- as.factor(processed_data[,cat])
+# }
+
+
+X = processed_data[, c("Trauma.center","Anticoagulant.therapy","Antiplatelet.therapy","GCS.init","GCS.motor.init","Pupil.anomaly.ph","Osmotherapy.Anomaly","Cardiac.arrest.ph","SBP.ph","DBP.ph","HR.ph","SBP.ph.min","DBP.ph.min","HR.ph.max","Cristalloid.volume","Colloid.volume","HemoCue.init","Delta.hemoCue","Vasopressor.therapy","SpO2.ph.min","Medcare.time.ph","GCS","GCS.motor","Pupil.anomaly","TCD.PI.max","FiO2","Neurosurgery.day0","IGS.II","TBI","Osmotherapy","IICP","EVD","Decompressive.craniectomy","AIS.head","AIS.face","AIS.external","ISS","Shock.index.ph","Delta.shock.index")]
+Y = processed_data[, "Tranexamic.acid"]
+W = processed_data[, "Death"]
+```
+
+```{r}
+forest = causal_forest(X, Y, W, num.trees = 2000)
+tree.plot <- plot(get_tree(forest, 2))
+cat(DiagrammeRsvg::export_svg(tree.plot), file='plot.svg')
+
+write.csv(x = forest$predictions, file = "forestpredictions.csv")
+
+ggplot(mapping = aes(x = log(X$Shock.index.ph), y = forest$predictions)) +
+  geom_point()
+```
+
+
+``` {r}
+var_imp <- c(variable_importance(forest))
+names(var_imp) <- colnames(X)
+sorted_var_imp <- sort(var_imp, decreasing=TRUE)
+
+sorted_var_imp
+```
+
+```{r}
+for (cat in colnames(X)) {
+  
+plot<- ggplot(mapping = aes(x = X[, cat], y = forest$predictions)) +
+  geom_point() +
+ggtitle(cat)
+#print(plot)
+ggsave(file=paste("plots/", cat, ".png", sep = ""), plot=plot, width=10, height=8, units = "cm")
+
+}
+```
+
+```{r}
+
+ggplot(mapping = aes(x = forest$predictions)) +  geom_histogram() 
+
+```

@@ -1,0 +1,60 @@
+---
+title: "Data_Imputer"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r import}
+library(missMDA)
+library(mice)
+library(missForest)
+```
+
+```{r causalToolbox}
+if (!require("devtools")) install.packages("devtools")
+devtools::install_github("soerenkuenzel/causalToolbox")
+```
+
+```{r import data}
+processed_data <- read.csv("C:\\Users\\haju1\\OneDrive\\Documents\\COURS\\Cours 3A\\Statistics in R\\PROJET\\data_preprocessed.csv",header = TRUE,row.names = 1)
+head(processed_data)
+help(estim_ncpFAMD)
+cats <- c("Trauma.center","Anticoagulant.therapy","Antiplatelet.therapy","Pupil.anomaly.ph","Osmotherapy.Anomaly","Cardiac.arrest.ph","Vasopressor.therapy","Pupil.anomaly","Neurosurgery.day0","Tranexamic.acid","TBI","Osmotherapy","IICP","EVD","Decompressive.craniectomy","Death")
+
+for(cat in cats) {
+  processed_data[,cat] <-  as.factor(processed_data[,cat])
+}
+
+processed_data$"Temperature.min" <- NULL
+  
+head(processed_data)
+```
+
+```{r impute FAMD}
+nb_FAMD <- estim_ncpFAMD(processed_data,ncp.max = 10,method.cv = "Kfold", verbose = TRUE)
+imputed_data_FAMD <- imputeFAMD(processed_data,ncp = nb)
+```
+
+```{r impute mice}
+help(mice)
+imputed_data_mice <- mice(processed_data)
+imputed_mice_1 <- complete(imputed_data_mice,1)
+imputed_mice_2 <- complete(imputed_data_mice,2)
+imputed_mice_3 <- complete(imputed_data_mice,3)
+imputed_mice_4 <- complete(imputed_data_mice,4)
+imputed_mice_5 <- complete(imputed_data_mice,5)
+view(imputed_mice_1)
+```
+
+```{r write}
+write.csv(imputed_mice_1, file="C:\\Users\\haju1\\imputed_mice_1.csv")
+write.csv(imputed_mice_2, file="C:\\Users\\haju1\\imputed_mice_2.csv")
+write.csv(imputed_mice_3, file="C:\\Users\\haju1\\imputed_mice_3.csv")
+write.csv(imputed_mice_4, file="C:\\Users\\haju1\\imputed_mice_4.csv")
+write.csv(imputed_mice_5, file="C:\\Users\\haju1\\imputed_mice_5.csv")
+```
+
